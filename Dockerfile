@@ -11,27 +11,26 @@ COPY packages/evershop/package.json ./packages/evershop/
 COPY packages/postgres-query-builder/package.json ./packages/postgres-query-builder/
 
 # ติดตั้ง dependencies ทั้งหมด (รวมถึง devDependencies สำหรับการ compile)
+# เราไม่ใช้ --omit=dev ที่นี่เพราะต้องการ swc สำหรับการ compile
 RUN npm install
 
 # คัดลอกโค้ดทั้งหมด
 COPY . .
 
 # ขั้นตอนสำคัญ: Compile packages
-# เราใช้คำสั่งตรงไปยัง bin เพื่อเลี่ยงปัญหา PATH
-RUN node ./packages/evershop/dist/bin/build/index.js || npm run compile
+# รัน compile เพื่อสร้างไฟล์ใน dist
+RUN npm run compile
 RUN npm run compile:db || echo "DB compile skipped"
 
 # รัน Build หน้าร้าน
 RUN npm run build
 
-# ลบ node_modules และติดตั้งใหม่เฉพาะ production เพื่อลดขนาด image (Optional)
-# RUN rm -rf node_modules && npm install --omit=dev
-
 # ตั้งค่าสิทธิ์การรันให้กับ entrypoint.sh
 RUN chmod +x entrypoint.sh
 
-# ตั้งค่า Environment Variables พื้นฐาน
+# ตั้งค่า Environment Variables
 ENV PORT=3000
+# เรายังคงใช้ production แต่เราติดตั้ง devDeps ไปแล้วข้างบน
 ENV NODE_ENV=production
 
 EXPOSE 3000
